@@ -1,3 +1,6 @@
+//the standard js lib is here: http://oauth.googlecode.com/svn/code/javascript/oauth.js
+//I put this script together as a learning exercise
+
 var jsoauth = function() {
 
 	//@credit "JavaScript: The Good Stuff", Crockford
