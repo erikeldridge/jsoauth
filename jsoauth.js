@@ -1,8 +1,9 @@
-//the standard js lib is here: http://oauth.googlecode.com/svn/code/javascript/oauth.js
-//I put this script together as a learning exercise
+// The standard js lib is here: http://oauth.googlecode.com/svn/code/javascript/oauth.js
+// I put this script together as a learning exercise
+// License: anything not credited to someone else is licensed under Yahoo! BSD: http://gist.github.com/375593
 
-var jsoauth = function() {
-
+var jsoauth = (function() {
+    
 	//@credit "JavaScript: The Good Stuff", Crockford
 	var parseURL = function(inputURL) {
 
@@ -51,7 +52,7 @@ var jsoauth = function() {
 		return str;
 	},
 
-	//@ref http://oauth.net/core/1.0/#rfc.section.9.1.2
+	// @ref http://oauth.net/core/1.0/#rfc.section.9.1.2
 	constructReqURL = function(inputURL) {
 
 		var parsedURL;
@@ -67,14 +68,14 @@ var jsoauth = function() {
 		}
 	},
 
-	//@pre params already collected & sorted
-	//@ref http://oauth.net/core/1.0/#rfc.section.9.1.1
+	// @pre params already collected & sorted
+	// @ref http://oauth.net/core/1.0/#rfc.section.9.1.1
 	concatenateParams = function(params) {
 		return params.join("&");
 	},
 
-	//@ref http://oauth.net/core/1.0/#rfc.section.9.1.1
-	//@ref http://oauth.net/core/1.0/#rfc.section.A.5.1
+	// @ref http://oauth.net/core/1.0/#rfc.section.9.1.1
+	// @ref http://oauth.net/core/1.0/#rfc.section.A.5.1
 	normalizeReqParams = function(params) {
 
 		params = params.sort();
@@ -118,56 +119,69 @@ var jsoauth = function() {
 		consumerKey: '',
 		consumerSecret: '',
 		reqMethod: 'GET',
+		
 		//must be uppercase @ref http://oauth.net/core/1.0/#rfc.section.9.1.3
 		sigMethod: 'HMAC-SHA1',
+		
 		oauthVersion: '1.0',
 		callbackURL: '',
-
+		
+		//handy for debugging
+        params: null,
+        normalReqParams: null,
+        baseStr: null,
+        signature: null,
+        
 		sign: function(args) {
 
-			var timestamp = Math.floor(new Date().getTime() / 1000),
-				normalReqParams, reqURL, baseStr, signature, signedURL, params = [];
+			var timestamp = Math.floor(new Date().getTime() / 1000);
+			
+			    // flush so multiple calls to obj don't conflict
+				this.normalReqParams = null;
+				this.baseStr = null; 
+				this.signature = null; 
+				this.params = [];
 
-			//basic oauth params formatted as strings in array so we can sort
-			params.push('oauth_consumer_key=' + this.consumerKey);
-			params.push('oauth_nonce=' + createNonce());
-			params.push('oauth_signature_method=' + this.sigMethod);
-			params.push('oauth_timestamp=' + timestamp);
-			params.push('oauth_version=' + this.oauthVersion);
-			params.push('oauth_callback=' + percentEncode(this.callbackURL));
+			// basic oauth params formatted as strings in array so we can sort easily
+			this.params.push('oauth_consumer_key=' + this.consumerKey);
+			this.params.push('oauth_nonce=' + createNonce());
+			this.params.push('oauth_signature_method=' + this.sigMethod);
+			this.params.push('oauth_timestamp=' + timestamp);
+			this.params.push('oauth_version=' + this.oauthVersion);
+			this.params.push('oauth_callback=' + percentEncode(this.callbackURL));
 
-			//if params passed in, add them
+			// if params passed in (as array of 'key=val' strings), add them
 			if (args.params) {
 				for (var i = 0; i < args.params.length; i++) {
-					params.push(args.params[i]);
+					this.params.push(args.params[i]);
 				}
 			}
 
-			//elems for base str
-			normalReqParams = normalizeReqParams(params);
+			// elems for base str
+			this.normalReqParams = normalizeReqParams(this.params);
 			reqURL = constructReqURL(args.URL);
 
-			//create base str
-			baseStr = concatenateReqElems({
+			// create base str
+			this.baseStr = concatenateReqElems({
 				'reqMethod': this.reqMethod,
 				'reqURL': percentEncode(reqURL),
-				'params': normalReqParams
+				'params': this.normalReqParams
 			});
-
-			signature = generateSig({
-				'baseStr': baseStr,
+            
+			this.signature = generateSig({
+				'baseStr': this.baseStr,
 				'secret': this.consumerSecret,
 				'token': ''
 			});
 
-			params.push('oauth_signature=' + percentEncode(signature));
+			this.params.push('oauth_signature=' + percentEncode(this.signature));
 
 			//maintain correct alpha sort - very important as it affects the signature
 			//@ref http://oauth.net/core/1.0/#rfc.section.9.1.1	
 			//@ref http://oauth.net/core/1.0/#9.2.1
-			signedURL = args.URL + '?' + concatenateParams(params.sort());
+			var signedURL = args.URL + '?' + concatenateParams(this.params.sort());
 
 			return signedURL;
 		}
 	};
-} ();
+}());
