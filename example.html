@@ -20,8 +20,8 @@
             Y.log(o);
         }
         
-        jsoauth.consumerKey = 'exampleJmk9cUdiaVJVbXpGdURNJmQ9WVdrOWFsaGhXWEE0TmpJbWNHbzlNQS0tJnM9Y29uc3VtZXJzZWNyZXQmeD02OQ--';
-        jsoauth.consumerSecret = 'example0e9ce497a8cd9fe3d2a7ecfe638db25257c';
+        jsoauth.consumerKey = 'dj0yJmk9cUdiaVJVbXpGdURNJmQ9WVdrOWFsaGhXWEE0TmpJbWNHbzlNQS0tJnM9Y29uc3VtZXJzZWNyZXQmeD02OQ--';
+        jsoauth.consumerSecret = '8024e0e9ce497a8cd9fe3d2a7ecfe638db25257c';
         // jsoauth.callbackURL = 'http://example.com';
 
         var URL = 'http://query.yahooapis.com/v1/yql';
@@ -33,7 +33,7 @@
         	    'callback=cback'
         	]
         });
-
+        Y.log(jsoauth.baseStr);
         Y.use('node', function(Y) {
         	Y.Get.script(signedURL);
         });
