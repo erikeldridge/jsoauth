@@ -2,6 +2,9 @@
     "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
+    <script>
+
+    </script>
 </head>
 <body>
 	<div id="out"></div>
@@ -11,19 +14,30 @@
 	<script type="text/javascript" src="jsoauth.js"></script>
 	
 	<script>
-	
-		jsoauth.consumerKey = '0yJmk9ZVpka2ZpUFVVd0tHJmQ9WVdrOVozYzFUVWRrTXpJbWNHbzlORGMwTkRreU16ZzAmcz1jb25zdW1lcnNlY3JldCZ4PTlj';
-		jsoauth.consumerSecret = '6e1784ebe1b82d3ddd5ca652f819233e1f0d81';
-		jsoauth.callbackURL = 'http://example.erikeldridge.com';
-					
-		var URL = 'https://api.login.yahoo.com/oauth/v2/get_request_token';
-			signedURL = jsoauth.sign({
-				'URL' : URL
-			});
-				
-		YUI().use('node', function(Y){
-		    Y.Node.get('#out').set('innerHTML', signedURL);
-		});
+	    var Y = new YUI();
+	    
+	    function cback(o){
+            Y.log(o);
+        }
+        
+        jsoauth.consumerKey = 'exampleJmk9cUdiaVJVbXpGdURNJmQ9WVdrOWFsaGhXWEE0TmpJbWNHbzlNQS0tJnM9Y29uc3VtZXJzZWNyZXQmeD02OQ--';
+        jsoauth.consumerSecret = 'example0e9ce497a8cd9fe3d2a7ecfe638db25257c';
+        // jsoauth.callbackURL = 'http://example.com';
+
+        var URL = 'http://query.yahooapis.com/v1/yql';
+        var signedURL = jsoauth.sign({
+        	'URL': URL,
+        	'params': [
+        	    'q=select%20%2A%20from%20social.updates.search%20where%20query%20%3D%20%22foo%22', 
+        	    'format=json', 
+        	    'callback=cback'
+        	]
+        });
+
+        Y.use('node', function(Y) {
+        	Y.Get.script(signedURL);
+        });
+
 		
 	</script>
 </body>
