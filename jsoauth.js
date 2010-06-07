@@ -1,38 +1,13 @@
-// The standard js lib is here: http://oauth.googlecode.com/svn/code/javascript/oauth.js
-// I put this script together as a learning exercise
+// I've found this script easier to debug with than the netflix js lib (http://oauth.googlecode.com/svn/code/javascript/oauth.js), which wasn't working out of the box for me
 // License: anything not credited to someone else is licensed under Yahoo! BSD: http://gist.github.com/375593
+// Source: http://github.com/erikeldridge/jsoauth
+// Dependencies:
+// - phpjs' parse_url http://phpjs.org/functions/parse_url:485
 
 var jsoauth = (function() {
-    
-    //@credit "JavaScript: The Good Stuff", Crockford
-    var parseURL = function(inputURL) {
-
-        var pattern = "^(https|http):\/\/" //scheme
-        + "([0-9a-z\-.]+)" //authority, aka host
-        + "(?::(\\d+))?" //port, optional
-        + "(?:\/([0-9a-z\-_\/]+))" //path
-        + "(?:[?]([0-9a-z=]*))?" //query, optional. the ?:[?] is used because ?:\? causes problems in FF3,safari
-        + "(?:#(.*))?",
-            //anchor, optional
-        regex = new RegExp(pattern),
-            matches = regex.exec(inputURL.toLowerCase()),
-            fields = ['url', 'scheme', 'authority', 'port', 'path', 'query', 'anchor'],
-            parsedURL = {};
-
-        if (!matches) {
-            throw ("parseURL error: incorrect formatting. Expected http[s]://host.tld[:port]/path[?q=query][#anchor], but got " + inputURL);
-        }
-
-        //map matched items to field names
-        for (var i = 0; i < fields.length; i++) {
-            parsedURL[fields[i]] = matches[i];
-        }
-
-        return parsedURL;
-    },
 
     // @credit oauth js lib: http://code.google.com/p/oauth/source/browse/#svn/code/javascript
-    percentEncode = function(str) {
+    var percentEncode = function(str) {
 
         if (str == null) {
             return "";
@@ -59,12 +34,17 @@ var jsoauth = (function() {
 
         try {
 
-            parsedURL = parseURL(inputURL);
-            return parsedURL['scheme'] + '://' + parsedURL['authority'] + '/' + parsedURL['path'];
+            // parse_url http://phpjs.org/functions/parse_url:485
+            parsedURL = parse_url(inputURL);
+
+            return parsedURL['scheme'] + '://' + parsedURL['host'] + '/' + parsedURL['path'];
 
         } catch(e) {
+
             //incorrectly formatted input url
-            alert(e);
+            if (alert) {
+                alert(e);
+            }
         }
     },
 
@@ -115,32 +95,46 @@ var jsoauth = (function() {
         return sig;
     };
 
+
+
+    function toHeaderString(params) {
+        var pairs = [];
+        for (var i = 0; i < params.length; i++) {
+            var pair = params[i].split('=');
+            pairs.push(pair[0] + '="' + pair[1] + '"');
+        }
+        return pairs.join(',');
+    }
+
     return {
         consumerKey: '',
         consumerSecret: '',
         reqMethod: 'GET',
         tokenSecret: '',
-        
+
         //must be uppercase @ref http://oauth.net/core/1.0/#rfc.section.9.1.3
         sigMethod: 'HMAC-SHA1',
-        
+
         oauthVersion: '1.0',
         callbackURL: '',
-        
+
         //handy for debugging
         params: null,
         normalReqParams: null,
         baseStr: null,
         signature: null,
-        
+
+        //utils
+        toHeaderString: toHeaderString,
+
         sign: function(args) {
 
             var timestamp = Math.floor(new Date().getTime() / 1000);
-            
+
             // flush so multiple calls to obj don't conflict
             this.normalReqParams = null;
-            this.baseStr = null; 
-            this.signature = null; 
+            this.baseStr = null;
+            this.signature = null;
             this.params = [];
 
             // basic oauth params formatted as strings in array so we can sort easily
@@ -159,7 +153,7 @@ var jsoauth = (function() {
 
             // elems for base str
             this.normalReqParams = normalizeReqParams(this.params);
-            reqURL = constructReqURL(args.URL); 
+            reqURL = constructReqURL(args.URL);
 
             // create base str
             this.baseStr = concatenateReqElems({
@@ -167,7 +161,7 @@ var jsoauth = (function() {
                 'reqURL': percentEncode(reqURL),
                 'params': this.normalReqParams
             });
-            
+
             this.signature = generateSig({
                 'baseStr': this.baseStr,
                 'secret': this.consumerSecret,
@@ -181,7 +175,10 @@ var jsoauth = (function() {
             //@ref http://oauth.net/core/1.0/#9.2.1
             var signedURL = args.URL + '?' + concatenateParams(this.params.sort());
 
-            return signedURL;
+            return {
+                queryString: concatenateParams(this.params),
+                headerString: toHeaderString(this.params)
+            };
         }
     };
-}());
+} ());
